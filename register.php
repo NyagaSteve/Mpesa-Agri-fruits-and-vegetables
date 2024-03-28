@@ -1,52 +1,83 @@
 <?php
-
+//START
 include 'config.php';
 
 if(isset($_POST['submit'])){
 
+   // Name validation
    $name = $_POST['name'];
    $name = filter_var($name, FILTER_SANITIZE_STRING);
+   if(empty($name)){
+      $message[] = 'Name is required!';
+   }elseif(strlen($name) < 3){
+      $message[] = 'Name must be at least 3 characters long!';
+   }
+ elseif (!preg_match('/^[a-zA-Z\s]+$/', $name)) {
+   $message[] = 'Name should contain only letters and spaces!';
+}
+
+   // Email validation
    $email = $_POST['email'];
-   $email = filter_var($email, FILTER_SANITIZE_STRING);
-   $pass = md5($_POST['pass']);
-   $pass = filter_var($pass, FILTER_SANITIZE_STRING);
-   $cpass = md5($_POST['cpass']);
-   $cpass = filter_var($cpass, FILTER_SANITIZE_STRING);
+   $email = filter_var($email, FILTER_SANITIZE_EMAIL);
+   if(!filter_var($email, FILTER_VALIDATE_EMAIL)){
+      $message[] = 'Invalid email format!';
+   }
 
-   $image = $_FILES['image']['name'];
-   $image = filter_var($image, FILTER_SANITIZE_STRING);
-   $image_size = $_FILES['image']['size'];
-   $image_tmp_name = $_FILES['image']['tmp_name'];
-   $image_folder = 'uploaded_img/'.$image;
-
-   $select = $conn->prepare("SELECT * FROM `users` WHERE email = ?");
-   $select->execute([$email]);
-
-   if($select->rowCount() > 0){
-      $message[] = 'user email already exist!';
+   // Password validation
+   $pass = $_POST['pass'];
+   $cpass = $_POST['cpass'];
+   if(empty($pass) || empty($cpass)){
+      $message[] = 'Password and Confirm Password are required!';
+   }elseif($pass != $cpass){
+      $message[] = 'Confirm password not matched!';
+   }elseif(strlen($pass) < 6){
+      $message[] = 'Password must be at least 6 characters long!';
+   } elseif (!preg_match('/^(?=.*\d)(?=.*[a-zA-Z])(?=.*\W).{6,}$/', $pass)) {
+      $message[] = 'Password must contain at least one number, one letter, one symbol, and be at least 6 characters long!';
    }else{
-      if($pass != $cpass){
-         $message[] = 'confirm password not matched!';
+      $pass = md5($pass); // Hash the password
+   }
+
+   // Image validation
+   $image = $_FILES['image']['name'];
+   if(empty($image)){
+      $message[] = 'Image is required!';
+   }else{
+      $image_size = $_FILES['image']['size'];
+      if($image_size > 20000000000){
+         $message[] = 'Image size is too large!';
+      }else{
+         $image_tmp_name = $_FILES['image']['tmp_name'];
+         $image_folder = 'uploaded_img/'.$image;
+      }
+   }
+
+   // If there are no validation errors, proceed to insert data
+   if(empty($message)){
+      $select = $conn->prepare("SELECT * FROM `users` WHERE email = ?");
+      $select->execute([$email]);
+
+      if($select->rowCount() > 0){
+         $message[] = 'User email already exists!';
       }else{
          $insert = $conn->prepare("INSERT INTO `users`(name, email, password, image) VALUES(?,?,?,?)");
          $insert->execute([$name, $email, $pass, $image]);
 
          if($insert){
-            if($image_size > 2000000){
-               $message[] = 'image size is too large!';
-            }else{
-               move_uploaded_file($image_tmp_name, $image_folder);
-               $message[] = 'registered successfully!';
-               header('location:login.php');
-            }
+            move_uploaded_file($image_tmp_name, $image_folder);
+            $message[] = 'Registered successfully!';
+            header('location:login.php');
+         }else{
+            $message[] = 'Error occurred while registering!';
          }
-
       }
    }
 
 }
 
+//END
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">

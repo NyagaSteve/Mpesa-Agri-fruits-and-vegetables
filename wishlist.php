@@ -101,7 +101,7 @@ if(isset($_GET['delete_all'])){
       <a href="view_page.php?pid=<?= $fetch_wishlist['pid']; ?>" class="fas fa-eye"></a>
       <img src="uploaded_img/<?= $fetch_wishlist['image']; ?>" alt="">
       <div class="name"><?= $fetch_wishlist['name']; ?></div>
-      <div class="price">$<?= $fetch_wishlist['price']; ?>/-</div>
+      <div class="price">KES <?= $fetch_wishlist['price']; ?>/-</div>
       <input type="number" min="1" value="1" class="qty" name="p_qty">
       <input type="hidden" name="pid" value="<?= $fetch_wishlist['pid']; ?>">
       <input type="hidden" name="p_name" value="<?= $fetch_wishlist['name']; ?>">
